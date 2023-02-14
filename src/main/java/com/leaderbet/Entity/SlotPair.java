@@ -1,8 +1,6 @@
 package com.leaderbet.Entity;
 
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import lombok.AllArgsConstructor;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,4 +14,8 @@ public class SlotPair extends AbstractPair {
     public SlotPair(Integer dataId, Integer labelId) {
         super(dataId, labelId);
     }
+
+    @OneToOne()
+    @JoinColumn(name = "DATA_ID", referencedColumnName = "ID", insertable = false, updatable = false)
+    private Game game;
 }

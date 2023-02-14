@@ -15,12 +15,12 @@ public class LabelPair extends AbstractPair {
         super(dataId, labelId);
     }
 
-    @OneToOne
-    @JoinColumn(name = "LABEL_ID", referencedColumnName = "ID",insertable = false, updatable = false)
-    Label label;
-
-    @OneToOne
-    @JoinColumn(name = "DATA_ID", referencedColumnName = "ID", insertable = false, updatable = false)
-    LabelGroup labelGroup;
+//    @OneToOne
+//    @JoinColumn(name = "LABEL_ID", referencedColumnName = "ID",insertable = false, updatable = false)
+//    Label label;
+//
+//    @OneToOne
+//    @JoinColumn(name = "DATA_ID", referencedColumnName = "ID", insertable = false, updatable = false)
+//    LabelGroup labelGroup;
 
 }

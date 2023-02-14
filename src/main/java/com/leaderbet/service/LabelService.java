@@ -2,20 +2,15 @@ package com.leaderbet.service;
 
 import com.leaderbet.Entity.Label;
 import com.leaderbet.Entity.LabelGroup;
-import com.leaderbet.Entity.LabelPair;
 import com.leaderbet.model.LabelTreeModel;
 import com.leaderbet.repository.LabelGroupsRepository;
 import com.leaderbet.repository.LabelPairsRepository;
 import com.leaderbet.repository.LabelRepository;
 import jakarta.transaction.Transactional;
-import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 
 @Service
@@ -37,17 +32,6 @@ public class LabelService {
 
     public Label add(Label label) {
         return labelRepository.save(label);
-    }
-
-    public Label edit(Integer id, Label label) {
-        return labelRepository.findById(id)
-                .map(existingLabel -> {
-                    var LabelToUpdate = new Label(
-                            existingLabel.getId(),
-                            label.getName());
-                    return labelRepository.save(LabelToUpdate);
-                })
-                .orElseThrow();
     }
 
     public void delete(int id) {
@@ -87,7 +71,6 @@ public class LabelService {
                 labelGroup.setChildren(labels);
             }
             children.add(labelGroup);
-
         });
         var leafs = labelRepository.findAll();
         leafs.forEach(lf -> {
@@ -113,74 +96,4 @@ public class LabelService {
         pair.forEach(p -> children.add(labelRepository.findById(p.getLabelId()).get()));
         return children;
     }
-
-
-//    @Transactional
-//    public List<LabelModel> getAllWithDetails() {
-
-//        return labelPairsRepository.findAll().stream()
-//                .map(labelPair -> {
-//                    LabelModel labelModel = new LabelModel();
-//                    labelModel.setXid(labelPair.getId());
-//                    Label label = labelPair.getLabel();
-//                    Label source = labelPair.getSource();
-//                    labelModel.setLabelName(label.getName());
-//                    labelModel.setParentLabels(List.of(source.getName()));
-//                    labelModel.setParentLabelIds(List.of(source.getId().toString()));
-//                    return labelModel;
-//                })
-//                .toList();
-
-
-
-/*
-        return getAll().stream().map(label -> {
-            Stream<Label> a = labelPairsRepository.findBySourceId(label.getId()).stream()
-                    .filter(pair -> Objects.equals(pair.getDataType(), "LABEL"))
-                    .map(pair -> labelRepository.findById(pair.getLabelId()).orElse(null))
-                    .filter(Objects::nonNull);
-            return new AbstractMap.SimpleEntry<>(label, a);
-        }).map(entry -> entry.getValue().collect(
-                Collectors.teeing(
-                        Collectors.mapping(Label::getName, Collectors.toList()),
-                        Collectors.mapping(label -> String.valueOf(label.getId()), Collectors.toList()),
-                        (names, ids) -> {
-                            Label parent = entry.getKey();
-                            var labelModel = new LabelModel();
-                            labelModel.setLabelName(parent.getName());
-                            labelModel.setXid(parent.getId());
-                            labelModel.setParentLabels(names);
-                            labelModel.setParentLabelIds(ids);
-                            return labelModel;
-                        }
-                ))).toList();*/
-//    }
-
-//    public List<LabelModel> getAllWithDetails() {
-//        List<Label> labels = getAll();
-//        return labels.stream().map(label -> {
-//
-//            var labelModel = new LabelModel();
-//            labelModel.setLabelName(label.getName());
-//            labelModel.setXid(label.getId());
-//
-//            var labelPairs = labelPairsRepository.findBySourceId(label.getId());
-//
-//            if (!CollectionUtils.isEmpty(labelPairs)) {
-//                List<String> parentLabels = new ArrayList<>();
-//                List<String> parentLabelIds = new ArrayList<>();
-//
-//                labelPairs.stream()
-//                        .filter(pair -> Objects.equals(pair.getDataType(), "LABEL"))
-//                        .forEach(pair -> {
-//                            parentLabels.add(labelRepository.findById(pair.getLabelId()).get().getName());
-//                            parentLabelIds.add(String.valueOf(pair.getLabelId()));
-//                        });
-//
-//                labelModel.setParentLabels(parentLabels);
-//                labelModel.setParentLabelIds(parentLabelIds);
-//            }
-//            return labelModel;
-//        }).collect(Collectors.toList());
-//    }
 }

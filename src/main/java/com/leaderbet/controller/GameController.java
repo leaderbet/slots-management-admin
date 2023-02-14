@@ -1,14 +1,16 @@
 package com.leaderbet.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.leaderbet.Entity.Game;
 import com.leaderbet.service.GameService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.awt.*;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/slots_management/games")
@@ -21,8 +23,9 @@ public class GameController {
 
     @GetMapping
     public List<Game> search(@RequestParam(required = false) String name,
+                             @RequestParam(required = false) Set<Integer> labelIds,
                              @RequestParam(required = false) Integer providerId) {
-        return gameService.search(name, providerId);
+        return gameService.search(name, providerId, labelIds);
     }
 
     @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

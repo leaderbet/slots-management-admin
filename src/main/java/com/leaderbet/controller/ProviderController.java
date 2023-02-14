@@ -29,7 +29,9 @@ public class ProviderController {
     }
 
     @PutMapping("/{id}/edit")
-    public Provider edit(@RequestBody Provider provider) {
+    public Provider edit(@PathVariable int id,
+                         @RequestBody Provider provider) {
+        provider.setId(id);
         return providerService.edit(provider);
     }
 

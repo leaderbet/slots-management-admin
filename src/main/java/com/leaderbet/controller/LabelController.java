@@ -1,12 +1,10 @@
 package com.leaderbet.controller;
 
 import com.leaderbet.Entity.Label;
-import com.leaderbet.Entity.LabelPair;
 import com.leaderbet.model.LabelTreeModel;
 import com.leaderbet.service.LabelService;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -38,16 +36,9 @@ public class LabelController {
         return labelService.add(label);
     }
 
-    @PutMapping("/{id}/edit")
-    public Label edit(@PathVariable int id,
-                      @RequestBody Label label) {
-        return labelService.edit(id, label);
-    }
-
     @DeleteMapping("/{id}/delete")
     public void delete(@PathVariable int id) {
         labelService.delete(id);
     }
-
 
 }

@@ -3,11 +3,14 @@ package com.leaderbet.service;
 import com.leaderbet.Entity.Provider;
 import com.leaderbet.repository.ProviderRepository;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Service
 public class ProviderService {
@@ -37,40 +40,32 @@ public class ProviderService {
         });
     }
 
+    private Provider getById(int id) {
+        Optional<Provider> p = providerRepository.findById(id);
+        if (p.isEmpty()) throw new NoSuchElementException();
+
+        return p.get();
+    }
 
     public Provider add(Provider provider) {
         return providerRepository.save(provider);
     }
 
+    @Transactional
     public void delete(Integer id) {
-        var provider = providerRepository.findById(id);
-        provider.ifPresent(p -> {
-            p.setDeletedAt(LocalDateTime.now());
-            providerRepository.save(p);
-        });
+        var provider = getById(id);
+        provider.setDeletedAt(LocalDateTime.now());
+
     }
 
     public Provider edit(Provider provider) {
-        return providerRepository.findById(provider.getId())
-                .map(existingProvider -> {
-                    var providerToUpdate = new Provider(
-                            existingProvider.getId(),
-                            provider.getPlatformName(),
-                            provider.getProviderName(),
-                            provider.getOperatorId(),
-                            provider.getEnabled());
-                    return providerRepository.save(providerToUpdate);
-                })
-//                .orElseGet(() -> add(provider));
-                .orElseThrow();
+        return providerRepository.save(provider);
     }
 
+    @Transactional
     public void changeProviderStatus(int id, int status) {
-        providerRepository.findById(id)
-                .map(existingProvider -> {
-                    existingProvider.setEnabled(status);
-                    return providerRepository.save(existingProvider);
-                })
-                .orElseThrow();
+        var provider = getById(id);
+        provider.setEnabled(status);
     }
+
 }

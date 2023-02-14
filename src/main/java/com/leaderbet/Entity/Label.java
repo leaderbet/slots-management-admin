@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -28,4 +30,9 @@ public class Label {
         this.id = id;
         this.name = name;
     }
+
+    @OneToMany
+    @JoinColumn(name = "LABEL_ID", referencedColumnName = "ID")
+    Set<SlotPair> slotPairs = new HashSet<>();
+
 }

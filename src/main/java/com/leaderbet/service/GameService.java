@@ -1,14 +1,14 @@
 package com.leaderbet.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.leaderbet.Entity.Game;
+import com.leaderbet.Entity.Label;
 import com.leaderbet.Entity.SlotPair;
 import com.leaderbet.config.ConfigProps;
-import com.leaderbet.repository.AbstractPairsRepository;
-import com.leaderbet.repository.GameRepository;
-import com.leaderbet.repository.ProviderRepository;
-import com.leaderbet.repository.SlotPairsRepository;
+import com.leaderbet.model.ImageConfig;
+import com.leaderbet.repository.*;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
@@ -18,32 +18,39 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Base64;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class GameService {
     private final GameRepository gameRepository;
-    private final ProviderRepository providerRepository;
     private final MinioService minioService;
     private final ConfigProps configProps;
-    private final AbstractPairsRepository abstractPairsRepository;
     private final ObjectMapper objectMapper;
     private final SlotPairsRepository slotPairsRepository;
+    private final LabelRepository labelRepository;
 
-    public GameService(GameRepository gameRepository, ProviderRepository providerRepository, MinioService minioService, ConfigProps configProps,
-                       AbstractPairsRepository abstractPairsRepository, ObjectMapper objectMapper, SlotPairsRepository slotPairsRepository) {
+    public GameService(GameRepository gameRepository, MinioService minioService, ConfigProps configProps,
+                       ObjectMapper objectMapper, SlotPairsRepository slotPairsRepository,
+                       LabelRepository labelRepository) {
         this.gameRepository = gameRepository;
-        this.providerRepository = providerRepository;
         this.minioService = minioService;
         this.configProps = configProps;
-        this.abstractPairsRepository = abstractPairsRepository;
         this.objectMapper = objectMapper;
         this.slotPairsRepository = slotPairsRepository;
+        this.labelRepository = labelRepository;
+    }
+
+    private Game getById(int id) {
+        var g = gameRepository.findById(id);
+        if (g.isEmpty()) {
+            throw new NoSuchElementException();
+        }
+        return g.get();
     }
 
     @Transactional
-    public List<Game> search(String name, Integer providerId) {
+    public List<Game> search(String name, Integer providerId, Set<Integer> labelIds) {
         List<Game> games = gameRepository.findAll((root, query, cb) -> {
 
             Predicate predicate = cb.conjunction();
@@ -55,16 +62,34 @@ public class GameService {
             }
             return predicate;
         });
+
+        if (!CollectionUtils.isEmpty(labelIds)) {
+            Set<Label> labels = labelRepository.findByIdWithGames(labelIds);
+            List<Game> finalGames = games;
+
+            Map<Game, Set<Integer>> a = labels.stream()
+                    .flatMap(label -> label.getSlotPairs().stream())
+                    .filter(slotPair -> finalGames.contains(slotPair.getGame()))
+                    .collect(Collectors.groupingBy(SlotPair::getGame, Collectors.mapping(SlotPair::getLabelId, Collectors.toSet())));
+
+            games = a.entrySet().stream()
+                    .filter(gameSetEntry -> gameSetEntry.getValue().containsAll(labelIds))
+                    .map(Map.Entry::getKey)
+                    .toList();
+        }
+
         games.forEach(game -> {
             var labels = slotPairsRepository.findByDataId(game.getId());
-            var labelIds = labels.stream().map(label -> label.getLabelId().toString()).toList();
-            game.setLabelIds(labelIds);
+            var ids = labels.stream().map(label -> label.getLabelId().toString()).toList();
+            game.setLabelIds(ids);
         });
+
         return games;
     }
 
     @Transactional
-    public Game add(String gameStr, MultipartFile image_1x1, MultipartFile image_1x2, MultipartFile image_2x1, MultipartFile image_2x2, MultipartFile bg) throws IOException {
+    public Game add(String gameStr, MultipartFile image_1x1, MultipartFile image_1x2, MultipartFile image_2x1,
+                    MultipartFile image_2x2, MultipartFile bg) throws IOException {
         Game game = objectMapper
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .readValue(gameStr, Game.class);

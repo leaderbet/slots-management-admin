@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,6 +34,7 @@ public class Game {
     private Integer enabled = 1;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime deletedAt;
+
     @Transient
     List<String> labelIds;
 
@@ -55,5 +55,14 @@ public class Game {
         this.imageConfig = imageConfig;
         this.enabled = enabled;
         this.labelIds = labelIds;
+    }
+
+    @Override
+    public String toString() {
+        return "Game{" +
+                "id=" + id +
+                ", providerId=" + providerId +
+                ", name='" + name + '\'' +
+                '}';
     }
 }
