@@ -6,6 +6,6 @@ import java.util.List;
 
 @Data
 public class ImageConfig {
-    private String defaultSize;  //selectedSize
-    private List<String> selectedSizes;
+    private String selectedSize;
+    private List<String> possibleSizes;
 }

@@ -2,6 +2,7 @@ package com.leaderbet.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.leaderbet.Entity.Game;
+import com.leaderbet.model.GameWrapper;
 import com.leaderbet.service.GameService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -49,4 +50,24 @@ public class GameController {
     public void delete(@PathVariable int id) {
         gameService.delete(id);
     }
+
+    @GetMapping("{id}/images")
+    public Map<String, String> getGameImages(@PathVariable int id) throws JsonProcessingException {
+        return gameService.getGameImages(id);
+    }
+
+    @PostMapping(value = "{id}/add_image"/*, consumes = MediaType.MULTIPART_FORM_DATA_VALUE*/)
+    public GameWrapper changeImage(@PathVariable int id,
+                                   @RequestParam("file_image") MultipartFile file,
+                                   @RequestParam(required = false) String size,
+                                   @RequestParam(required = false) String s) throws IOException {
+        return gameService.changeImage(id, file, s, size);
+    }
+
+    @PostMapping(value = "{id}/change_image_size")
+    public Game changeImageSelectedSize(@PathVariable int id,
+                                        @RequestParam(required = false) String size) throws IOException {
+        return gameService.changeImageSelectedSize(id, size);
+    }
+
 }

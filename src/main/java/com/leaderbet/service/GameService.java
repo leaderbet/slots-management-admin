@@ -7,10 +7,12 @@ import com.leaderbet.Entity.Game;
 import com.leaderbet.Entity.Label;
 import com.leaderbet.Entity.SlotPair;
 import com.leaderbet.config.ConfigProps;
+import com.leaderbet.model.GameWrapper;
 import com.leaderbet.model.ImageConfig;
 import com.leaderbet.repository.*;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
+import net.minidev.json.JSONObject;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -118,6 +120,33 @@ public class GameService {
         return image != null ? Base64.getEncoder().encodeToString(image) : null;
     }
 
+    public Map<String, String> getImages(Game game) throws JsonProcessingException {
+        Map<String, String> imgMap = new HashMap<>();
+
+        var conf = game.getImageConfig();
+        var obj = objectMapper
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .readValue(conf, ImageConfig.class);
+
+        List<String> possibleSizes = obj.getPossibleSizes();
+        if (!CollectionUtils.isEmpty(possibleSizes)) {
+            possibleSizes.forEach(size -> {
+                String fullName = String.format("%s_%s.%s", game.getId(), size, "png");
+                var image = getImage(minioService.getObject(configProps.getMinioBucket(), fullName));
+                if (image != null) {
+                    imgMap.put(size, image);
+                }
+            });
+        }
+
+        return imgMap;
+    }
+
+    public String getImage(int id, String size) {
+        String fullName = String.format("%s_%s.%s", id, size, "png");
+        return getImage(minioService.getObject(configProps.getMinioBucket(), fullName));
+    }
+
     public void delete(Integer id) {
         var game = gameRepository.findById(id);
         game.ifPresent(p -> p.setDeletedAt(LocalDateTime.now()));
@@ -137,4 +166,50 @@ public class GameService {
         }
         return gameRepository.save(game);
     }
+
+    public Map<String, String> getGameImages(int id) throws JsonProcessingException {
+        var game = getById(id);
+        return getImages(game);
+    }
+
+    public String getGameImage(int id, String size) {
+        return getImage(id, size);
+    }
+
+    @Transactional
+    public GameWrapper changeImage(int id, MultipartFile file, String s, String size) throws IOException {
+        savePhoto(file, String.valueOf(id), s);
+        var game = getById(id);
+        var imageConfig = game.getImageConfig();
+        var imageConfigObj = objectMapper.readValue(imageConfig, ImageConfig.class);
+        var possibleSizes = imageConfigObj.getPossibleSizes();
+        if (!possibleSizes.contains(s)) {
+            possibleSizes.add(s);
+            var jo = convertToJson(size, possibleSizes);
+            game.setImageConfig(String.valueOf(jo));
+            gameRepository.save(game);
+        }
+        return new GameWrapper(true, game);
+    }
+
+    private JSONObject convertToJson(String selectedSize, List<String> possibleSizes) {
+        JSONObject jo = new JSONObject();
+        jo.put("selectedSize", selectedSize);
+        jo.put("possibleSizes", possibleSizes);
+
+        return jo;
+    }
+
+    @Transactional
+    public Game changeImageSelectedSize(int id, String size) throws JsonProcessingException {
+        var game = getById(id);
+        var imageConfig = game.getImageConfig();
+        var imageConfigObj = objectMapper.readValue(imageConfig, ImageConfig.class);
+
+        var jo = convertToJson(size, imageConfigObj.getPossibleSizes());
+        game.setImageConfig(String.valueOf(jo));
+        gameRepository.save(game);
+        return game;
+    }
+
 }
