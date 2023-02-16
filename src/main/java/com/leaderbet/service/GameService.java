@@ -10,12 +10,10 @@ import com.leaderbet.config.ConfigProps;
 import com.leaderbet.model.GameWrapper;
 import com.leaderbet.model.ImageConfig;
 import com.leaderbet.repository.*;
-import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import net.minidev.json.JSONObject;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -52,19 +50,8 @@ public class GameService {
     }
 
     @Transactional
-    public List<Game> search(String name, Integer providerId, Set<Integer> labelIds) {
-        List<Game> games = gameRepository.findAll((root, query, cb) -> {
-
-            Predicate predicate = cb.conjunction();
-            if (StringUtils.hasText(name)) {
-                predicate = cb.and(predicate, cb.equal(root.get("name"), name));
-            }
-            if (providerId != null) {
-                predicate = cb.and(predicate, cb.equal(root.get("providerId"), providerId));
-            }
-            return predicate;
-        });
-
+    public List<Game> search(Set<Integer> labelIds) {
+        List<Game> games = gameRepository.findAll();
         if (!CollectionUtils.isEmpty(labelIds)) {
             Set<Label> labels = labelRepository.findByIdWithGames(labelIds);
             List<Game> finalGames = games;
@@ -79,11 +66,15 @@ public class GameService {
                     .map(Map.Entry::getKey)
                     .toList();
         }
-
         games.forEach(game -> {
-            var labels = slotPairsRepository.findByDataId(game.getId());
+            List<SlotPair> labels = slotPairsRepository.findByDataId(game.getId());
             var ids = labels.stream().map(label -> label.getLabelId().toString()).toList();
             game.setLabelIds(ids);
+
+            if (labelIds.size() == 1) {
+                SlotPair lp = slotPairsRepository.findByDataIdAndLabelId(game.getId(), labelIds.iterator().next());
+                game.setSort(lp.getSort());
+            }
         });
 
         return games;
@@ -152,7 +143,6 @@ public class GameService {
         game.ifPresent(p -> p.setDeletedAt(LocalDateTime.now()));
     }
 
-
     @Transactional
     public Game edit(Game game) {
         if (!CollectionUtils.isEmpty(game.getLabelIds())) {
@@ -170,10 +160,6 @@ public class GameService {
     public Map<String, String> getGameImages(int id) throws JsonProcessingException {
         var game = getById(id);
         return getImages(game);
-    }
-
-    public String getGameImage(int id, String size) {
-        return getImage(id, size);
     }
 
     @Transactional
@@ -212,4 +198,12 @@ public class GameService {
         return game;
     }
 
+    @Transactional
+    public void setSort(int dataId, int labelId, double sort) {
+        SlotPair oldSlotPair = slotPairsRepository.findByDataIdAndLabelId(dataId, labelId);
+        if (oldSlotPair != null) slotPairsRepository.delete(oldSlotPair);
+
+        SlotPair slotPair = new SlotPair(dataId, labelId, sort);
+        slotPairsRepository.save(slotPair);
+    }
 }

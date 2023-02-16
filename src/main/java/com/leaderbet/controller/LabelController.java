@@ -21,11 +21,6 @@ public class LabelController {
         return labelService.getAll();
     }
 
-//    @GetMapping
-//    public List<LabelModel> getAllWithDetails() {
-//        return labelService.getAllWithDetails();
-//    }`
-
     @GetMapping("/for_tree")
     public LabelTreeModel getAllForTree() {
         return labelService.getAllForTree();
@@ -34,11 +29,6 @@ public class LabelController {
     @PostMapping("/add")
     public Label add(@RequestBody Label label) {
         return labelService.add(label);
-    }
-
-    @DeleteMapping("/{id}/delete")
-    public void delete(@PathVariable int id) {
-        labelService.delete(id);
     }
 
 }

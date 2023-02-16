@@ -20,7 +20,6 @@ public class Game {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ID", updatable = false, nullable = false, insertable = false)
     private Integer id;
-    //    @Column(name = "provider_id", insertable = false, updatable = false)
     private Integer providerId;
     private String subProviderId;
     private String operatorId;
@@ -36,26 +35,10 @@ public class Game {
     private LocalDateTime deletedAt;
 
     @Transient
-    List<String> labelIds;
+    private List<String> labelIds;
 
-
-    public Game(Integer id, Integer providerId, String subProviderId, String operatorId, String gameLaunchId,
-                String mobileGameLaunchId, String gameRealId, String mobileGameRealId,
-                String name, Integer isMobile, String imageConfig, Integer enabled, List<String> labelIds) {
-        this.id = id;
-        this.providerId = providerId;
-        this.subProviderId = subProviderId;
-        this.operatorId = operatorId;
-        this.gameLaunchId = gameLaunchId;
-        this.mobileGameLaunchId = mobileGameLaunchId;
-        this.gameRealId = gameRealId;
-        this.mobileGameRealId = mobileGameRealId;
-        this.name = name;
-        this.isMobile = isMobile;
-        this.imageConfig = imageConfig;
-        this.enabled = enabled;
-        this.labelIds = labelIds;
-    }
+    @Transient
+    private double sort;
 
     @Override
     public String toString() {

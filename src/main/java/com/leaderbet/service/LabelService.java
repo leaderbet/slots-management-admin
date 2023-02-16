@@ -8,6 +8,7 @@ import com.leaderbet.repository.LabelPairsRepository;
 import com.leaderbet.repository.LabelRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,15 +35,9 @@ public class LabelService {
         return labelRepository.save(label);
     }
 
-    public void delete(int id) {
-        labelRepository.deleteById(id);
-    }
-
-
     @Transactional
     public LabelTreeModel getAllForTree() {
         LabelTreeModel parent = new LabelTreeModel();
-
         List<LabelTreeModel> children = new ArrayList<>();
 
         getActiveRoots().forEach(root -> {
@@ -52,7 +47,6 @@ public class LabelService {
             labelGroup.setXid(String.valueOf(root.getId()));
 
             var pairs = labelPairsRepository.findByDataId(root.getId());
-
             if (pairs != null) {
                 List<LabelTreeModel> labels = new ArrayList<>();
                 pairs.forEach(pair -> {
@@ -64,7 +58,6 @@ public class LabelService {
                         lastChild.setSort(pair.getSort());
                         lastChild.setXid(String.valueOf(l.get().getId()));
                         lastChild.setJoinId(String.valueOf(pair.getId()));
-
                         labels.add(lastChild);
                     }
                 });
@@ -78,9 +71,9 @@ public class LabelService {
             lastChild.setText(lf.getName());
             lastChild.setLeaf(true);
             lastChild.setXid(String.valueOf(lf.getId()));
+            lastChild.setGameCount(!CollectionUtils.isEmpty(lf.getSlotPairs()) ? lf.getSlotPairs().size() : 0);
             children.add(lastChild);
         });
-
         parent.setChildren(children);
 
         return parent;
@@ -88,12 +81,5 @@ public class LabelService {
 
     public List<LabelGroup> getActiveRoots() {
         return labelGroupsRepository.findAll();
-    }
-
-    public List<Label> getActiveChildren(int rootId) {
-        List<Label> children = new ArrayList<>();
-        var pair = labelPairsRepository.findByDataId(rootId);
-        pair.forEach(p -> children.add(labelRepository.findById(p.getLabelId()).get()));
-        return children;
     }
 }

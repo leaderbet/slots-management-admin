@@ -13,4 +13,6 @@ public class LabelTreeModel {
     private Boolean leaf;
     private Double sort;
     private List<LabelTreeModel> children;
+
+    private Integer gameCount;
 }

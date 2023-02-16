@@ -55,7 +55,6 @@ public class ProviderService {
     public void delete(Integer id) {
         var provider = getById(id);
         provider.setDeletedAt(LocalDateTime.now());
-
     }
 
     public Provider edit(Provider provider) {

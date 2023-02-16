@@ -23,10 +23,8 @@ public class GameController {
     }
 
     @GetMapping
-    public List<Game> search(@RequestParam(required = false) String name,
-                             @RequestParam(required = false) Set<Integer> labelIds,
-                             @RequestParam(required = false) Integer providerId) {
-        return gameService.search(name, providerId, labelIds);
+    public List<Game> search(@RequestParam(required = false) Set<Integer> labelIds) {
+        return gameService.search(labelIds);
     }
 
     @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -68,6 +66,13 @@ public class GameController {
     public Game changeImageSelectedSize(@PathVariable int id,
                                         @RequestParam(required = false) String size) throws IOException {
         return gameService.changeImageSelectedSize(id, size);
+    }
+
+    @PostMapping("/{id}/add_sort")
+    public void setSort(@PathVariable int id,
+                        @RequestParam int labelId,
+                        @RequestParam(defaultValue = "0.00") double sort) {
+        gameService.setSort(id, labelId, sort);
     }
 
 }

@@ -15,6 +15,10 @@ public class SlotPair extends AbstractPair {
         super(dataId, labelId);
     }
 
+    public SlotPair(Integer dataId, Integer labelId, double sort) {
+        super(dataId, labelId, sort);
+    }
+
     @OneToOne()
     @JoinColumn(name = "DATA_ID", referencedColumnName = "ID", insertable = false, updatable = false)
     private Game game;

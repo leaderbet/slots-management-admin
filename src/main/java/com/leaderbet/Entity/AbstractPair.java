@@ -36,4 +36,9 @@ public abstract class AbstractPair {
         this.labelId = labelId;
     }
 
+    public AbstractPair(Integer dataId, Integer labelId, double sort) {
+        this.dataId = dataId;
+        this.labelId = labelId;
+        this.sort = sort;
+    }
 }

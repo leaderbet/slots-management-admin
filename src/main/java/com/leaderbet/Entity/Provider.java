@@ -23,12 +23,4 @@ public class Provider {
     private Integer enabled;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime deletedAt;
-
-    public Provider(Integer id, String platformName, String providerName, Integer operatorId, Integer enabled) {
-        this.id = id;
-        this.platformName = platformName;
-        this.providerName = providerName;
-        this.operatorId = operatorId;
-        this.enabled = enabled;
-    }
 }

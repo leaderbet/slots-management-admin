@@ -25,12 +25,6 @@ public class Label {
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime deletedAt;
 
-
-    public Label(Integer id, String name) {
-        this.id = id;
-        this.name = name;
-    }
-
     @OneToMany
     @JoinColumn(name = "LABEL_ID", referencedColumnName = "ID")
     Set<SlotPair> slotPairs = new HashSet<>();
