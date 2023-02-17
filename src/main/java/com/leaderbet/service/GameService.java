@@ -71,7 +71,7 @@ public class GameService {
             var ids = labels.stream().map(label -> label.getLabelId().toString()).toList();
             game.setLabelIds(ids);
 
-            if (labelIds.size() == 1) {
+            if (labelIds != null && labelIds.size() == 1) {
                 SlotPair lp = slotPairsRepository.findByDataIdAndLabelId(game.getId(), labelIds.iterator().next());
                 game.setSort(lp.getSort());
             }
