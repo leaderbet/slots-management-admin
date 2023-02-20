@@ -20,7 +20,7 @@ public class Provider {
     private String platformName;
     private String providerName;
     private Integer operatorId;
-    private Integer enabled;
+    private Integer enabled = 1;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime deletedAt;
 }
