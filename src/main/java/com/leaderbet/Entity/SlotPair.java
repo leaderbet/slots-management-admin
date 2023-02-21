@@ -1,5 +1,6 @@
 package com.leaderbet.Entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,7 +20,8 @@ public class SlotPair extends AbstractPair {
         super(dataId, labelId, sort);
     }
 
-    @OneToOne()
+    @JsonBackReference
+    @ManyToOne
     @JoinColumn(name = "DATA_ID", referencedColumnName = "ID", insertable = false, updatable = false)
     private Game game;
 }

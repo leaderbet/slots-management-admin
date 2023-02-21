@@ -3,6 +3,7 @@ package com.leaderbet.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.leaderbet.Entity.AbstractPair;
 import com.leaderbet.Entity.Game;
 import com.leaderbet.Entity.Label;
 import com.leaderbet.Entity.SlotPair;
@@ -29,16 +30,19 @@ public class GameService {
     private final ObjectMapper objectMapper;
     private final SlotPairsRepository slotPairsRepository;
     private final LabelRepository labelRepository;
+    private final LabelPairsRepository labelPairsRepository;
 
     public GameService(GameRepository gameRepository, MinioService minioService, ConfigProps configProps,
                        ObjectMapper objectMapper, SlotPairsRepository slotPairsRepository,
-                       LabelRepository labelRepository) {
+                       LabelRepository labelRepository,
+                       LabelPairsRepository labelPairsRepository) {
         this.gameRepository = gameRepository;
         this.minioService = minioService;
         this.configProps = configProps;
         this.objectMapper = objectMapper;
         this.slotPairsRepository = slotPairsRepository;
         this.labelRepository = labelRepository;
+        this.labelPairsRepository = labelPairsRepository;
     }
 
     private Game getById(int id) {
@@ -50,9 +54,11 @@ public class GameService {
     }
 
     @Transactional
-    public List<Game> search(Set<Integer> labelIds) {
+    public List<Game> search(Set<Integer> labelIds, Boolean withoutPhoto, Boolean uncategorized) {
         List<Game> games = gameRepository.findAll();
-        if (!CollectionUtils.isEmpty(labelIds)) {
+        if (uncategorized) games = getUncategorizedGames(games);
+        if (withoutPhoto) games = gameRepository.findByImageConfigIsNull();
+        if (!uncategorized && !withoutPhoto && !CollectionUtils.isEmpty(labelIds)) {
             Set<Label> labels = labelRepository.findByIdWithGames(labelIds);
             List<Game> finalGames = games;
 
@@ -77,6 +83,32 @@ public class GameService {
             }
         });
 
+        return games;
+    }
+
+    private List<Game> getUncategorizedGames(List<Game> games) {
+        Set<Integer> providerChildrenLabelIds = labelPairsRepository.findByDataId(1)
+                .stream()
+                .map(AbstractPair::getLabelId)
+                .collect(Collectors.toSet());
+
+        for (Game g : games) {
+            Set<SlotPair> slotPairs = g.getSlotPairs();
+            if (!CollectionUtils.isEmpty(slotPairs)) {
+                List<Integer> ids = slotPairs
+                        .stream()
+                        .map(AbstractPair::getLabelId)
+                        .toList();
+                for (Integer id : ids) {
+                    if (providerChildrenLabelIds.contains(id)) {
+                        games = games
+                                .stream()
+                                .filter(game -> !Objects.equals(game.getId(), g.getId()))
+                                .toList();
+                    }
+                }
+            }
+        }
         return games;
     }
 
@@ -115,6 +147,7 @@ public class GameService {
         Map<String, String> imgMap = new HashMap<>();
 
         var conf = game.getImageConfig();
+        if (conf == null) return imgMap;
         var obj = objectMapper
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .readValue(conf, ImageConfig.class);
@@ -167,14 +200,21 @@ public class GameService {
         savePhoto(file, String.valueOf(id), s);
         var game = getById(id);
         var imageConfig = game.getImageConfig();
-        var imageConfigObj = objectMapper.readValue(imageConfig, ImageConfig.class);
-        var possibleSizes = imageConfigObj.getPossibleSizes();
-        if (!possibleSizes.contains(s)) {
-            possibleSizes.add(s);
-            var jo = convertToJson(size, possibleSizes);
-            game.setImageConfig(String.valueOf(jo));
-            gameRepository.save(game);
+        ImageConfig imageConfigObj = new ImageConfig();
+        if (imageConfig != null) {
+            imageConfigObj = objectMapper.readValue(imageConfig, ImageConfig.class);
         }
+
+        var possibleSizes = imageConfigObj.getPossibleSizes();
+        if (!CollectionUtils.isEmpty(possibleSizes) && !possibleSizes.contains(s)) {
+            possibleSizes.add(s);
+        } else {
+            possibleSizes = new ArrayList<>();
+            possibleSizes.add(s);
+        }
+        var jo = convertToJson(size, possibleSizes);
+        game.setImageConfig(String.valueOf(jo));
+        gameRepository.save(game);
         return new GameWrapper(true, game);
     }
 

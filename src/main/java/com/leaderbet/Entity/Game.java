@@ -1,5 +1,6 @@
 package com.leaderbet.Entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,6 +9,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -33,6 +35,10 @@ public class Game {
     private Integer enabled = 1;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime deletedAt;
+
+    @JsonManagedReference
+    @OneToMany(mappedBy="game")
+    private Set<SlotPair> slotPairs;
 
     @Transient
     private List<String> labelIds;

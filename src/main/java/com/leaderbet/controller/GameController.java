@@ -23,8 +23,10 @@ public class GameController {
     }
 
     @GetMapping
-    public List<Game> search(@RequestParam(required = false) Set<Integer> labelIds) {
-        return gameService.search(labelIds);
+    public List<Game> search(@RequestParam(required = false) Set<Integer> labelIds,
+                             @RequestParam(defaultValue = "false") Boolean withoutPhoto,
+                             @RequestParam(defaultValue = "false") Boolean uncategorized) {
+        return gameService.search(labelIds, withoutPhoto, uncategorized);
     }
 
     @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
