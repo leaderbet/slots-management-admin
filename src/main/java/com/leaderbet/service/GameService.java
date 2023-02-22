@@ -31,11 +31,12 @@ public class GameService {
     private final SlotPairsRepository slotPairsRepository;
     private final LabelRepository labelRepository;
     private final LabelPairsRepository labelPairsRepository;
+    private final ProviderRepository providerRepository;
 
     public GameService(GameRepository gameRepository, MinioService minioService, ConfigProps configProps,
                        ObjectMapper objectMapper, SlotPairsRepository slotPairsRepository,
                        LabelRepository labelRepository,
-                       LabelPairsRepository labelPairsRepository) {
+                       LabelPairsRepository labelPairsRepository, ProviderRepository providerRepository) {
         this.gameRepository = gameRepository;
         this.minioService = minioService;
         this.configProps = configProps;
@@ -43,6 +44,7 @@ public class GameService {
         this.slotPairsRepository = slotPairsRepository;
         this.labelRepository = labelRepository;
         this.labelPairsRepository = labelPairsRepository;
+        this.providerRepository = providerRepository;
     }
 
     private Game getById(int id) {
@@ -118,6 +120,9 @@ public class GameService {
         Game game = objectMapper
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .readValue(gameStr, Game.class);
+
+        var operatorId = providerRepository.findById(game.getProviderId()).get().getOperatorId();
+        game.setOperatorId(String.valueOf(operatorId));
 
         var savedGame = gameRepository.save(game);
 
@@ -245,5 +250,12 @@ public class GameService {
 
         SlotPair slotPair = new SlotPair(dataId, labelId, sort);
         slotPairsRepository.save(slotPair);
+    }
+
+    @Transactional
+    public void changeGameStatus(int id, int status) {
+        var game = getById(id);
+        game.setEnabled(status);
+        gameRepository.save(game);
     }
 }

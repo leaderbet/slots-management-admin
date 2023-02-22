@@ -77,4 +77,10 @@ public class GameController {
         gameService.setSort(id, labelId, sort);
     }
 
+    @PutMapping("/{id}/change_status")
+    public void changeProviderStatus(@PathVariable int id,
+                                     @RequestParam int status) {
+        gameService.changeGameStatus(id, status);
+    }
+
 }

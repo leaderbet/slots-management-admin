@@ -32,4 +32,8 @@ public class LabelPairsController {
 
     }
 
+    @DeleteMapping("/{id}/delete")
+    public void deleteLabelPair(@PathVariable int id){
+        labelPairsService.deleteLabelPair(id);
+    }
 }

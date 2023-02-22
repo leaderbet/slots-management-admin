@@ -41,4 +41,7 @@ public class LabelPairsService {
         return labelPair;
     }
 
+    public void deleteLabelPair(int id) {
+        labelPairsRepository.deleteById(id);
+    }
 }
